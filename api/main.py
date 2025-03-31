@@ -11,8 +11,10 @@ from fastapi.responses import JSONResponse
 from tasks import handle_task  # Import dynamic task handler
 from typing import Optional
 from utils.file_process import handle_file_processing  # Import file processing utility
-from tasks.tasks import handle_task # Import HTTP GET request handler
+from tasks.tasks import handle_task  # Import HTTP GET request handler
 import tasks
+from mangum import Mangum  # ✅ Add Mangum for Vercel
+
 app = FastAPI()
 
 app.add_middleware(
@@ -22,9 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-
 
 @app.post("/api/")
 async def answer_question(
@@ -36,13 +35,12 @@ async def answer_question(
     else:
         print("📂 No file uploaded.")
     answer = handle_task(question, file)
-    return JSONResponse(content={"answer": str(answer)}) # Ensure proper JSON output
-
+    return JSONResponse(content={"answer": str(answer)})  # Ensure proper JSON output
 
 @app.post("/run")
 async def run_question(
     question: str = Form(...),
-    file: Optional[UploadFile] = File(None)  
+    file: Optional[UploadFile] = File(None)
 ):
     print(f"📩 Received POST request with question: {question}")  # Debugging
 
@@ -56,8 +54,10 @@ async def test_upload(file: UploadFile = File(...)):
     content = await file.read()
     return {"filename": file.filename, "size": len(content)}
 
-
-
 @app.get("/api/health")
 def health_check():
     return {"status": "OK"}
+
+# ✅ Add Mangum handler for Vercel
+handler = Mangum(app)
+
